@@ -1,0 +1,114 @@
+<!--
+  ============================================================================
+  ARCHIVIO PIANI EDITORIALI  —  lo storico
+  Per aggiungere un mese, copia un blocco nella lista PIANI qui sotto.
+  ============================================================================
+-->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Archivio piani editoriali</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bordeaux:#7A2535; --bordeaux-d:#5A1A27;
+    --panna:#F4EFE6; --stone:#E8DECE; --stone-d:#D8CBB5;
+    --ink:#2B2622; --muted:#8C8273;
+    --verde:#2E7D4F; --verde-bg:#E4F0E7;
+    --rust:#B5532A; --rust-bg:#F6E7DC;
+    --amber:#9C7A1A; --amber-bg:#F3EAD2;
+    --card:#FFFFFF; --shadow:0 1px 2px rgba(43,38,34,.06), 0 10px 30px rgba(43,38,34,.07);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Inter",system-ui,sans-serif; color:var(--ink); background:var(--panna);
+    background-image:radial-gradient(circle at 12% -5%, rgba(122,37,53,.06), transparent 40%);
+    line-height:1.5; -webkit-font-smoothing:antialiased; min-height:100vh;}
+  .wrap{max-width:760px; margin:0 auto; padding:54px 22px 90px}
+  .head{margin-bottom:38px}
+  .eyebrow{font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--bordeaux); font-weight:600}
+  h1{font-family:"Cormorant Garamond",serif; font-weight:600; font-size:42px; line-height:1.05; margin:6px 0 8px}
+  .head p{font-size:14px; color:var(--muted); max-width:46ch}
+
+  .client-group{margin-bottom:40px}
+  .client-name{font-family:"Cormorant Garamond",serif; font-style:italic; font-size:24px; color:var(--bordeaux);
+    margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--stone-d);}
+
+  .plan{display:flex; align-items:center; gap:16px; background:var(--card); border:1px solid var(--stone);
+    border-radius:14px; box-shadow:var(--shadow); padding:16px 18px; margin-bottom:12px;
+    text-decoration:none; color:inherit; transition:transform .14s, box-shadow .14s; border-left:4px solid var(--stone-d);}
+  .plan:hover{transform:translateY(-2px); box-shadow:0 4px 10px rgba(43,38,34,.08),0 16px 36px rgba(43,38,34,.10)}
+  .plan[data-stato="approvato"]{border-left-color:var(--verde)}
+  .plan[data-stato="inviato"]{border-left-color:var(--amber)}
+  .plan[data-stato="bozza"]{border-left-color:var(--stone-d)}
+  .plan .month{font-family:"Cormorant Garamond",serif; font-size:23px; font-weight:600; min-width:160px}
+  .plan .meta{font-size:13px; color:var(--muted); margin-right:auto}
+  .stato{font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:5px 11px; border-radius:999px; white-space:nowrap}
+  .stato.approvato{background:var(--verde-bg); color:var(--verde)}
+  .stato.inviato{background:var(--amber-bg); color:var(--amber)}
+  .stato.bozza{background:var(--stone); color:var(--muted)}
+  .arrow{color:var(--stone-d); transition:color .14s, transform .14s}
+  .plan:hover .arrow{color:var(--bordeaux); transform:translateX(3px)}
+
+  footer{text-align:center; color:var(--muted); font-size:12px; margin-top:30px}
+  footer span{color:var(--bordeaux); font-family:"Cormorant Garamond",serif; font-style:italic; font-size:15px}
+  @media (max-width:560px){
+    h1{font-size:32px} .plan{flex-wrap:wrap; gap:8px 14px}
+    .plan .month{min-width:0; font-size:20px} .arrow{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <span class="eyebrow">Fra.me · social</span>
+    <h1>Archivio piani editoriali</h1>
+    <p>Lo storico di tutti i piani mese per mese. Tocca un mese per rivederlo o controllarne lo stato.</p>
+  </div>
+  <div id="archivio"></div>
+  <footer>Curato da <span>Fra.me</span></footer>
+</div>
+
+<script>
+/* ============================================================================
+   ELENCO DEI PIANI — aggiungi un blocco ogni mese.
+     stato: "bozza"      (in preparazione, non ancora inviato)
+            "inviato"    (mandato al cliente, in attesa di risposta)
+            "approvato"  (approvato dal cliente)
+     link:  percorso alla cartella del mese
+   ============================================================================ */
+const PIANI = [
+  {
+    cliente: "Grotta Marcello",
+    voci: [
+      { mese:"Luglio 2026", periodo:"1–31 luglio", contenuti:3, stato:"bozza", link:"2026-07/index.html" }
+      // { mese:"Agosto 2026", periodo:"1–31 agosto", contenuti:0, stato:"bozza", link:"2026-08/index.html" },
+    ]
+  }
+  // Per un nuovo cliente, copia tutto questo blocco { cliente:..., voci:[...] }.
+];
+
+const LABEL = { bozza:"Bozza", inviato:"Inviato", approvato:"Approvato" };
+const root = document.getElementById("archivio");
+
+PIANI.forEach(group=>{
+  const g=document.createElement("div"); g.className="client-group";
+  g.innerHTML=`<div class="client-name">${group.cliente}</div>`;
+  group.voci.forEach(v=>{
+    const a=document.createElement("a");
+    a.className="plan"; a.href=v.link; a.dataset.stato=v.stato;
+    a.innerHTML=`
+      <span class="month">${v.mese}</span>
+      <span class="meta">${v.periodo} · ${v.contenuti} contenut${v.contenuti===1?"o":"i"}</span>
+      <span class="stato ${v.stato}">${LABEL[v.stato]}</span>
+      <span class="arrow">→</span>`;
+    g.appendChild(a);
+  });
+  root.appendChild(g);
+});
+</script>
+</body>
+</html>
