@@ -96,8 +96,12 @@ const root = document.getElementById("archivio");
 
 function render(PIANI){
   root.innerHTML="";
-  if(!PIANI.length){root.innerHTML='<p style="color:var(--muted)">Nessun piano ancora pubblicato.</p>';return;}
-  PIANI.forEach(group=>{
+  // Lo storico mostra solo i mesi approvati.
+  const soloApprovati = PIANI
+    .map(g=>({cliente:g.cliente, voci:(g.voci||[]).filter(v=>v.stato==="approvato")}))
+    .filter(g=>g.voci.length);
+  if(!soloApprovati.length){root.innerHTML='<p style="color:var(--muted)">Ancora nessun piano approvato. I mesi compaiono qui una volta approvati dal cliente.</p>';return;}
+  soloApprovati.forEach(group=>{
     const g=document.createElement("div"); g.className="client-group";
     g.innerHTML=`<div class="client-name">${group.cliente}</div>`;
     group.voci.forEach(v=>{
