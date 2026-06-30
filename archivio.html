@@ -80,7 +80,7 @@
             "approvato"  (approvato dal cliente)
      link:  percorso alla cartella del mese
    ============================================================================ */
-const PIANI = [
+const FALLBACK = [
   {
     cliente: "Grotta Marcello",
     voci: [
@@ -94,21 +94,32 @@ const PIANI = [
 const LABEL = { bozza:"Bozza", inviato:"Inviato", approvato:"Approvato" };
 const root = document.getElementById("archivio");
 
-PIANI.forEach(group=>{
-  const g=document.createElement("div"); g.className="client-group";
-  g.innerHTML=`<div class="client-name">${group.cliente}</div>`;
-  group.voci.forEach(v=>{
-    const a=document.createElement("a");
-    a.className="plan"; a.href=v.link; a.dataset.stato=v.stato;
-    a.innerHTML=`
-      <span class="month">${v.mese}</span>
-      <span class="meta">${v.periodo} · ${v.contenuti} contenut${v.contenuti===1?"o":"i"}</span>
-      <span class="stato ${v.stato}">${LABEL[v.stato]}</span>
-      <span class="arrow">→</span>`;
-    g.appendChild(a);
+function render(PIANI){
+  root.innerHTML="";
+  if(!PIANI.length){root.innerHTML='<p style="color:var(--muted)">Nessun piano ancora pubblicato.</p>';return;}
+  PIANI.forEach(group=>{
+    const g=document.createElement("div"); g.className="client-group";
+    g.innerHTML=`<div class="client-name">${group.cliente}</div>`;
+    group.voci.forEach(v=>{
+      const a=document.createElement("a");
+      a.className="plan"; a.href=v.link; a.dataset.stato=v.stato;
+      a.innerHTML=`
+        <span class="month">${v.mese}</span>
+        <span class="meta">${v.periodo} · ${v.contenuti} contenut${v.contenuti===1?"o":"i"}</span>
+        <span class="stato ${v.stato}">${LABEL[v.stato]||v.stato}</span>
+        <span class="arrow">→</span>`;
+      g.appendChild(a);
+    });
+    root.appendChild(g);
   });
-  root.appendChild(g);
-});
+}
+
+// Lo storico si aggiorna da solo: legge piani.json se presente,
+// altrimenti usa la lista qui sotto come riserva.
+fetch("piani.json",{cache:"no-store"})
+  .then(r=>r.ok?r.json():Promise.reject())
+  .then(render)
+  .catch(()=>render(FALLBACK));
 </script>
 </body>
 </html>
