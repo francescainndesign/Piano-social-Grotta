@@ -43,7 +43,7 @@
     border-radius:11px; background:var(--card); border:1px solid var(--stone-d);}
   .pill b{font-size:17px; font-weight:600; line-height:1}
   .pill span{font-size:10px; letter-spacing:.04em; color:var(--muted); margin-top:3px; text-transform:uppercase}
-  .pill.ok b{color:var(--verde)} .pill.mod b{color:var(--rust)} .pill.wait b{color:var(--muted)}
+  .pill.ok b{color:var(--verde)} .pill.mod b{color:var(--rust)} .pill.wait b{color:var(--muted)} .pill.sc b{color:#6E6358}
   .btn{font-family:inherit; font-weight:600; cursor:pointer; border:none; border-radius:11px; transition:background .18s, transform .1s;}
   .btn-send{font-size:13.5px; color:#fff; background:var(--bordeaux); padding:11px 16px; white-space:nowrap;}
   .btn-send:hover{background:var(--bordeaux-d)} .btn:active{transform:translateY(1px)}
@@ -55,6 +55,8 @@
     border:1px solid var(--stone); border-left:4px solid var(--stone-d); transition:border-left-color .25s;}
   .card[data-state="approvato"]{border-left-color:var(--verde)}
   .card[data-state="modifica"]{border-left-color:var(--rust)}
+  .card[data-state="scartato"]{border-left-color:#B7AC9C}
+  .card[data-state="scartato"] .media,.card[data-state="scartato"] .caption,.card[data-state="scartato"] .tags{opacity:.5}
   .card-meta{display:flex; align-items:center; gap:9px; padding:13px 16px 11px; flex-wrap:wrap;}
   .date{font-weight:600; font-size:14px}
   .dot{width:3px; height:3px; border-radius:50%; background:var(--stone-d)}
@@ -86,11 +88,14 @@
   .card[data-state="approvato"] .status-label .mark{background:var(--verde)}
   .card[data-state="modifica"] .status-label{color:var(--rust)}
   .card[data-state="modifica"] .status-label .mark{background:var(--rust)}
+  .card[data-state="scartato"] .status-label{color:#6E6358}
+  .card[data-state="scartato"] .status-label .mark{background:#6E6358}
   .act{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; padding:9px 14px; border-radius:10px;
     border:1.5px solid var(--stone-d); background:#fff; color:var(--ink); transition:.15s; display:flex; align-items:center; gap:6px;}
   .act:hover{border-color:var(--muted)}
   .act.ok[aria-pressed="true"]{background:var(--verde-bg); border-color:var(--verde); color:var(--verde)}
   .act.mod[aria-pressed="true"]{background:var(--rust-bg); border-color:var(--rust); color:var(--rust)}
+  .act.sc[aria-pressed="true"]{background:#EAE4DA; border-color:#B7AC9C; color:#6E6358}
   .note{display:none; width:100%; font-family:inherit; font-size:13.5px; color:var(--ink); border:1.5px solid var(--rust);
     border-radius:10px; padding:10px 12px; resize:vertical; min-height:62px; background:var(--rust-bg);}
   .note::placeholder{color:#b58a72}
@@ -155,6 +160,7 @@
     <div class="counts">
       <div class="pill ok"><b id="c-ok">0</b><span>Approvati</span></div>
       <div class="pill mod"><b id="c-mod">0</b><span>Da modif.</span></div>
+      <div class="pill sc"><b id="c-sc">0</b><span>Scartati</span></div>
       <div class="pill wait"><b id="c-wait">0</b><span>In attesa</span></div>
     </div>
     <button class="btn btn-send" id="jumpBtn">Invia approvazioni</button>
@@ -260,19 +266,22 @@ function buildCard(post,i){
         <span class="status-label"><span class="mark"></span><span class="st-text">In attesa</span></span>
         <button class="act ok" aria-pressed="false">✓ Approva</button>
         <button class="act mod" aria-pressed="false">✎ Richiedi modifica</button>
+        <button class="act sc" aria-pressed="false">✕ Scarta</button>
       </div>
       <textarea class="note" placeholder="Cosa vorresti cambiare? (es. accorciare il video, cambiare foto, correggere il testo…)"></textarea>
     </div>`;
-  const okB=el.querySelector(".ok"), modB=el.querySelector(".mod"),
+  const okB=el.querySelector(".ok"), modB=el.querySelector(".mod"), scB=el.querySelector(".sc"),
         note=el.querySelector(".note"), stText=el.querySelector(".st-text");
   function set(s){
     state[i].stato=s; el.dataset.state=s;
     okB.setAttribute("aria-pressed",s==="approvato"); modB.setAttribute("aria-pressed",s==="modifica");
-    stText.textContent=s==="approvato"?"Approvato":s==="modifica"?"Da modificare":"In attesa";
+    scB.setAttribute("aria-pressed",s==="scartato");
+    stText.textContent=s==="approvato"?"Approvato":s==="modifica"?"Da modificare":s==="scartato"?"Scartato":"In attesa";
     if(s==="modifica") note.focus(); updateCounts();
   }
   okB.onclick=()=>set(state[i].stato==="approvato"?"attesa":"approvato");
   modB.onclick=()=>set(state[i].stato==="modifica"?"attesa":"modifica");
+  scB.onclick=()=>set(state[i].stato==="scartato"?"attesa":"scartato");
   note.oninput=()=>state[i].nota=note.value;
   const car=el.querySelector(".carousel");
   if(car){const dots=el.querySelectorAll(".dots i");
@@ -281,24 +290,26 @@ function buildCard(post,i){
   return el;
 }
 function updateCounts(){
-  let ok=0,mod=0,wait=0;
-  Object.values(state).forEach(s=>{s.stato==="approvato"?ok++:s.stato==="modifica"?mod++:wait++;});
+  let ok=0,mod=0,sc=0,wait=0;
+  Object.values(state).forEach(s=>{s.stato==="approvato"?ok++:s.stato==="modifica"?mod++:s.stato==="scartato"?sc++:wait++;});
   document.getElementById("c-ok").textContent=ok;
   document.getElementById("c-mod").textContent=mod;
+  document.getElementById("c-sc").textContent=sc;
   document.getElementById("c-wait").textContent=wait;
 }
 function riepilogo(){
   const L=[`PIANO EDITORIALE — ${PIANO.cliente} — ${PIANO.mese}`,""];
   PIANO.posts.forEach((p,i)=>{
     const s=state[i];
-    const tag=s.stato==="approvato"?"✅ APPROVATO":s.stato==="modifica"?"✏️ DA MODIFICARE":"⏳ IN ATTESA";
+    const tag=s.stato==="approvato"?"✅ APPROVATO":s.stato==="modifica"?"✏️ DA MODIFICARE":s.stato==="scartato"?"🗑 SCARTATO":"⏳ IN ATTESA";
     L.push(`${i+1}. ${dataEstesa(p.data)} · ${p.formato} (${p.canale}) — ${tag}`);
     if(s.stato==="modifica"&&s.nota.trim()) L.push(`   → ${s.nota.trim()}`);
   });
   const ok=Object.values(state).filter(s=>s.stato==="approvato").length;
   const mod=Object.values(state).filter(s=>s.stato==="modifica").length;
+  const sc=Object.values(state).filter(s=>s.stato==="scartato").length;
   const wait=Object.values(state).filter(s=>s.stato==="attesa").length;
-  L.push("",`Riepilogo: ${ok} approvati · ${mod} da modificare · ${wait} in attesa.`);
+  L.push("",`Riepilogo: ${ok} approvati · ${mod} da modificare · ${sc} scartati · ${wait} in attesa.`);
   return L.join("\n");
 }
 function toast(msg){const t=document.getElementById("toast");
@@ -318,13 +329,23 @@ async function invia(){
   const vals=Object.values(state);
   const approvati=vals.filter(s=>s.stato==="approvato").length;
   const daMod=vals.filter(s=>s.stato==="modifica").length;
+  const scartati=vals.filter(s=>s.stato==="scartato").length;
   const inAttesa=vals.filter(s=>s.stato==="attesa").length;
   if(inAttesa>0 && !confirm(`Ci sono ${inAttesa} contenuti ancora in attesa. Vuoi inviare comunque?`)) return;
+
+  const ETICHETTA={approvato:"Approvato",modifica:"Da modificare",scartato:"Scartato",attesa:"In attesa"};
+  const posts=PIANO.posts.map((p,i)=>({
+    n:i+1, data:p.data||"", ora:p.ora||"", canale:p.canale||"", formato:p.formato||"",
+    caption:p.caption||"", hashtag:p.hashtag||"",
+    stato:ETICHETTA[state[i].stato], nota:(state[i].nota||"").trim()
+  }));
 
   const btn=document.getElementById("sendBtn"); btn.disabled=true; btn.textContent="Invio in corso…";
   const payload={
     cliente:PIANO.cliente, mese:PIANO.mese, referente:ref,
-    approvati, daModificare:daMod, inAttesa, decisioni:riepilogo()
+    approvati, daModificare:daMod, scartati, inAttesa,
+    tuttoApprovato:(approvati===PIANO.posts.length && PIANO.posts.length>0),
+    posts, decisioni:riepilogo()
   };
   try{
     // text/plain + no-cors: evita il blocco CORS verso Google.
