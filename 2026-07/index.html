@@ -1,0 +1,363 @@
+<!--
+  ============================================================================
+  PIANO EDITORIALE · MOTORE  (questo file NON si tocca)
+  Tutti i contenuti del mese stanno in  dati.js
+  ============================================================================
+-->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piano editoriale · Approvazione</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bordeaux:#7A2535; --bordeaux-d:#5A1A27;
+    --panna:#F4EFE6; --stone:#E8DECE; --stone-d:#D8CBB5;
+    --ink:#2B2622; --muted:#8C8273;
+    --verde:#2E7D4F; --verde-bg:#E4F0E7;
+    --rust:#B5532A; --rust-bg:#F6E7DC;
+    --card:#FFFFFF; --shadow:0 1px 2px rgba(43,38,34,.06), 0 8px 28px rgba(43,38,34,.07);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Inter",system-ui,sans-serif; color:var(--ink); background:var(--panna);
+    background-image:radial-gradient(circle at 15% 0%, rgba(122,37,53,.05), transparent 45%),
+                     radial-gradient(circle at 85% 100%, rgba(181,83,42,.05), transparent 45%);
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  header.top{position:sticky; top:0; z-index:30; background:rgba(244,239,230,.86);
+    backdrop-filter:saturate(180%) blur(12px); border-bottom:1px solid var(--stone-d);}
+  .top-inner{max-width:1080px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .brand{display:flex; flex-direction:column; line-height:1.1; margin-right:auto}
+  .brand .eyebrow{font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--bordeaux); font-weight:600;}
+  .brand h1{font-family:"Cormorant Garamond",serif; font-weight:600; font-size:26px; letter-spacing:.01em;}
+  .brand .sub{font-size:12.5px; color:var(--muted)}
+  .counts{display:flex; gap:8px}
+  .pill{display:flex; flex-direction:column; align-items:center; min-width:62px; padding:6px 10px;
+    border-radius:11px; background:var(--card); border:1px solid var(--stone-d);}
+  .pill b{font-size:17px; font-weight:600; line-height:1}
+  .pill span{font-size:10px; letter-spacing:.04em; color:var(--muted); margin-top:3px; text-transform:uppercase}
+  .pill.ok b{color:var(--verde)} .pill.mod b{color:var(--rust)} .pill.wait b{color:var(--muted)}
+  .btn{font-family:inherit; font-weight:600; cursor:pointer; border:none; border-radius:11px; transition:background .18s, transform .1s;}
+  .btn-send{font-size:13.5px; color:#fff; background:var(--bordeaux); padding:11px 16px; white-space:nowrap;}
+  .btn-send:hover{background:var(--bordeaux-d)} .btn:active{transform:translateY(1px)}
+  .intro{max-width:520px; margin:30px auto 6px; padding:0 20px; text-align:center}
+  .intro .month{font-family:"Cormorant Garamond",serif; font-style:italic; font-size:21px; color:var(--bordeaux);}
+  .intro p{font-size:14px; color:var(--muted); margin-top:8px}
+  .feed{max-width:520px; margin:24px auto 40px; padding:0 16px; display:flex; flex-direction:column; gap:30px;}
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
+    border:1px solid var(--stone); border-left:4px solid var(--stone-d); transition:border-left-color .25s;}
+  .card[data-state="approvato"]{border-left-color:var(--verde)}
+  .card[data-state="modifica"]{border-left-color:var(--rust)}
+  .card-meta{display:flex; align-items:center; gap:9px; padding:13px 16px 11px; flex-wrap:wrap;}
+  .date{font-weight:600; font-size:14px}
+  .dot{width:3px; height:3px; border-radius:50%; background:var(--stone-d)}
+  .time{font-size:13px; color:var(--muted)}
+  .badges{margin-left:auto; display:flex; gap:6px}
+  .badge{font-size:10.5px; font-weight:600; letter-spacing:.03em; padding:4px 9px; border-radius:999px; text-transform:uppercase;}
+  .badge.format{background:var(--bordeaux); color:#fff}
+  .badge.channel{background:var(--stone); color:var(--bordeaux-d)}
+  .media{position:relative; background:var(--stone); line-height:0}
+  .media img, .media video{width:100%; display:block; object-fit:cover}
+  .media.reel{aspect-ratio:9/16; max-height:640px}
+  .media.reel video, .media.reel img{height:100%; object-fit:cover}
+  .reel-tag{position:absolute; top:11px; right:11px; z-index:2; background:rgba(43,38,34,.62); color:#fff;
+    font-size:11px; font-weight:600; padding:4px 9px; border-radius:999px; display:flex; align-items:center; gap:5px; backdrop-filter:blur(4px);}
+  .reel-tag svg{display:block}
+  .carousel{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none}
+  .carousel::-webkit-scrollbar{display:none}
+  .carousel > *{flex:0 0 100%; scroll-snap-align:center}
+  .dots{position:absolute; bottom:11px; left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:2}
+  .dots i{width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.55); transition:.2s}
+  .dots i.on{background:#fff; width:18px; border-radius:3px}
+  .caption{padding:14px 17px 4px; font-size:14.5px; white-space:pre-wrap}
+  .tags{padding:6px 17px 16px; font-size:13.5px; color:var(--bordeaux); font-weight:500}
+  .approve{border-top:1px solid var(--stone); padding:13px 16px; display:flex; flex-direction:column; gap:11px;}
+  .approve-row{display:flex; gap:10px; align-items:center}
+  .status-label{font-size:12.5px; font-weight:600; color:var(--muted); margin-right:auto; display:flex; align-items:center; gap:7px;}
+  .status-label .mark{width:9px; height:9px; border-radius:50%; background:var(--stone-d)}
+  .card[data-state="approvato"] .status-label{color:var(--verde)}
+  .card[data-state="approvato"] .status-label .mark{background:var(--verde)}
+  .card[data-state="modifica"] .status-label{color:var(--rust)}
+  .card[data-state="modifica"] .status-label .mark{background:var(--rust)}
+  .act{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; padding:9px 14px; border-radius:10px;
+    border:1.5px solid var(--stone-d); background:#fff; color:var(--ink); transition:.15s; display:flex; align-items:center; gap:6px;}
+  .act:hover{border-color:var(--muted)}
+  .act.ok[aria-pressed="true"]{background:var(--verde-bg); border-color:var(--verde); color:var(--verde)}
+  .act.mod[aria-pressed="true"]{background:var(--rust-bg); border-color:var(--rust); color:var(--rust)}
+  .note{display:none; width:100%; font-family:inherit; font-size:13.5px; color:var(--ink); border:1.5px solid var(--rust);
+    border-radius:10px; padding:10px 12px; resize:vertical; min-height:62px; background:var(--rust-bg);}
+  .note::placeholder{color:#b58a72}
+  .card[data-state="modifica"] .note{display:block}
+  .note:focus{outline:2px solid var(--rust); outline-offset:1px}
+  .ph{width:100%; aspect-ratio:4/5; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; color:var(--muted); background:repeating-linear-gradient(135deg,var(--stone) 0 14px,#e3d8c6 14px 28px);}
+  .ph.reel{aspect-ratio:9/16}
+  .ph svg{opacity:.55}
+  .ph span{font-size:12.5px; font-weight:500; letter-spacing:.02em}
+
+  /* invio finale */
+  .send-box{max-width:520px; margin:10px auto 110px; padding:0 16px}
+  .send-card{background:var(--card); border:1px solid var(--stone); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px; text-align:center}
+  .send-card h2{font-family:"Cormorant Garamond",serif; font-weight:600; font-size:22px; color:var(--bordeaux); margin-bottom:6px}
+  .send-card p{font-size:13.5px; color:var(--muted); margin-bottom:14px}
+  .send-card .field{display:flex; flex-direction:column; gap:6px; text-align:left; margin-bottom:14px}
+  .send-card label{font-size:12px; font-weight:600; color:var(--muted)}
+  .send-card input{font-family:inherit; font-size:14px; padding:10px 12px; border:1.5px solid var(--stone-d);
+    border-radius:10px; background:#fff; color:var(--ink)}
+  .send-card input:focus{outline:2px solid var(--bordeaux); outline-offset:1px; border-color:var(--bordeaux)}
+  .btn-big{width:100%; font-size:15px; color:#fff; background:var(--bordeaux); padding:14px; border-radius:12px}
+  .btn-big:hover{background:var(--bordeaux-d)}
+  .btn-big:disabled{background:var(--stone-d); cursor:not-allowed}
+  .send-alt{margin-top:12px; font-size:12.5px; color:var(--muted)}
+  .send-alt a{color:var(--bordeaux); cursor:pointer; font-weight:600; text-decoration:underline}
+  .sent-ok{display:none; padding:8px 0}
+  .sent-ok svg{color:var(--verde)}
+  .sent-ok h2{color:var(--verde)}
+
+  .empty{max-width:480px; margin:80px auto; text-align:center; color:var(--muted); padding:0 24px}
+  .empty h2{font-family:"Cormorant Garamond",serif; color:var(--bordeaux); font-size:24px; margin-bottom:10px}
+  .empty code{background:var(--stone); padding:2px 7px; border-radius:5px; font-size:13px}
+
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; font-size:13.5px; font-weight:500; padding:12px 18px; border-radius:11px;
+    box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:50;
+    display:flex; align-items:center; gap:9px; max-width:90vw;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast .ck{color:#9be0b4}
+  footer{text-align:center; padding:0 20px 50px; color:var(--muted); font-size:12px}
+  footer span{color:var(--bordeaux); font-family:"Cormorant Garamond",serif; font-style:italic; font-size:15px}
+  footer a{color:var(--muted)}
+  @media (max-width:560px){
+    .top-inner{padding:12px 14px; gap:12px} .brand h1{font-size:22px}
+    .counts{order:3; width:100%; justify-content:space-between} .pill{flex:1}
+    .btn-send{order:2; margin-left:auto}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important; scroll-behavior:auto !important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="eyebrow">Piano editoriale</span>
+      <h1 id="cliente">—</h1>
+      <span class="sub">Instagram + Facebook · approvazione contenuti</span>
+    </div>
+    <div class="counts">
+      <div class="pill ok"><b id="c-ok">0</b><span>Approvati</span></div>
+      <div class="pill mod"><b id="c-mod">0</b><span>Da modif.</span></div>
+      <div class="pill wait"><b id="c-wait">0</b><span>In attesa</span></div>
+    </div>
+    <button class="btn btn-send" id="jumpBtn">Invia approvazioni</button>
+  </div>
+</header>
+
+<div class="intro">
+  <div class="month" id="mese">—</div>
+  <p>Scorri i contenuti come appariranno nel feed. Per ognuno tocca <b>Approva</b> oppure
+     <b>Richiedi modifica</b> scrivendo cosa cambiare. Alla fine, in fondo, premi <b>Invia le approvazioni</b>.</p>
+</div>
+
+<main class="feed" id="feed"></main>
+
+<section class="send-box" id="sendBox">
+  <div class="send-card">
+    <div id="sendForm">
+      <h2>Hai finito?</h2>
+      <p>Lascia il tuo nome e invia. Le tue scelte arrivano direttamente a Francesca.</p>
+      <div class="field">
+        <label for="ref">Il tuo nome</label>
+        <input type="text" id="ref" placeholder="Es. Marco — Grotta Marcello" autocomplete="name">
+      </div>
+      <button class="btn btn-big" id="sendBtn">Invia le approvazioni</button>
+      <div class="send-alt">
+        Problemi con l'invio? <a id="copyFallback">Copia il riepilogo</a> e mandalo a mano.
+      </div>
+    </div>
+    <div class="sent-ok" id="sentOk">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.5 2.5 5-5.5"/></svg>
+      <h2>Approvazioni inviate</h2>
+      <p>Grazie! Francesca ha ricevuto le tue scelte. Puoi chiudere la pagina.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Bacheca preparata con cura da <span>Fra.me</span> · <a href="../archivio.html">Tutti i piani</a></footer>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toast-msg"></span></div>
+
+<!-- I CONTENUTI DEL MESE: -->
+<script src="dati.js"></script>
+
+<script>
+/* ===== MOTORE — non serve modificare ===== */
+
+/* Indirizzo del foglio Google che riceve le approvazioni.
+   Va aggiornato SOLO se in futuro crei un nuovo deployment su Apps Script
+   (aggiornare lo script esistente non cambia questa URL). */
+const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbz151786O3226KI8XbT-02s-MzqmtXtFh8ESvBZ4FBuOQGykARVzqKNurz8y3b3ymjB4w/exec";
+
+const PIANO = window.PIANO || null;
+const state = {};
+const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
+
+function dataEstesa(iso){
+  const d=new Date(iso+"T00:00:00"); if(isNaN(d)) return iso;
+  return GIORNI[d.getDay()].replace(/^./,c=>c.toUpperCase())+" "+d.getDate()+" "+MESI[d.getMonth()];
+}
+function placeholder(reel){
+  const ic = reel
+    ? '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4z" fill="currentColor" stroke="none"/></svg>'
+    : '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M3 16l5-4 4 3 3-3 6 5"/></svg>';
+  return `<div class="ph${reel?' reel':''}">${ic}<span>${reel?'Reel in arrivo':'Foto in arrivo'}</span></div>`;
+}
+function mediaHTML(post){
+  const reel = (post.formato||"").toLowerCase()==="reel";
+  const items = post.media && post.media.length ? post.media : [{tipo:"foto",src:""}];
+  if(items.length>1){
+    const slides = items.map(m=> m.src?`<img src="${m.src}" alt="" loading="lazy" onerror="mediaFallback(this,false)">`:placeholder(false)).join("");
+    const dots = items.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join("");
+    return `<div class="media"><div class="carousel">${slides}</div><div class="dots">${dots}</div></div>`;
+  }
+  const m=items[0];
+  if(reel){
+    const inner = m.src?`<video src="${m.src}" autoplay muted loop playsinline onerror="mediaFallback(this,true)"></video>`:placeholder(true);
+    const play='<svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5z"/></svg>';
+    return `<div class="media reel"><span class="reel-tag">${play} Reel</span>${inner}</div>`;
+  }
+  const inner = m.src?`<img src="${m.src}" alt="" loading="lazy" onerror="mediaFallback(this,false)">`:placeholder(false);
+  return `<div class="media">${inner}</div>`;
+}
+function mediaFallback(node, reel){
+  const w=document.createElement("div"); w.innerHTML=placeholder(reel);
+  node.replaceWith(w.firstElementChild);
+}
+function buildCard(post,i){
+  state[i]={stato:"attesa",nota:""};
+  const el=document.createElement("article");
+  el.className="card"; el.dataset.state="attesa";
+  el.innerHTML=`
+    <div class="card-meta">
+      <span class="date">${dataEstesa(post.data)}</span>
+      <span class="dot"></span><span class="time">${post.ora||""}</span>
+      <span class="badges"><span class="badge format">${post.formato}</span><span class="badge channel">${post.canale}</span></span>
+    </div>
+    ${mediaHTML(post)}
+    ${post.caption?`<div class="caption">${post.caption}</div>`:""}
+    ${post.hashtag?`<div class="tags">${post.hashtag}</div>`:""}
+    <div class="approve">
+      <div class="approve-row">
+        <span class="status-label"><span class="mark"></span><span class="st-text">In attesa</span></span>
+        <button class="act ok" aria-pressed="false">✓ Approva</button>
+        <button class="act mod" aria-pressed="false">✎ Richiedi modifica</button>
+      </div>
+      <textarea class="note" placeholder="Cosa vorresti cambiare? (es. accorciare il video, cambiare foto, correggere il testo…)"></textarea>
+    </div>`;
+  const okB=el.querySelector(".ok"), modB=el.querySelector(".mod"),
+        note=el.querySelector(".note"), stText=el.querySelector(".st-text");
+  function set(s){
+    state[i].stato=s; el.dataset.state=s;
+    okB.setAttribute("aria-pressed",s==="approvato"); modB.setAttribute("aria-pressed",s==="modifica");
+    stText.textContent=s==="approvato"?"Approvato":s==="modifica"?"Da modificare":"In attesa";
+    if(s==="modifica") note.focus(); updateCounts();
+  }
+  okB.onclick=()=>set(state[i].stato==="approvato"?"attesa":"approvato");
+  modB.onclick=()=>set(state[i].stato==="modifica"?"attesa":"modifica");
+  note.oninput=()=>state[i].nota=note.value;
+  const car=el.querySelector(".carousel");
+  if(car){const dots=el.querySelectorAll(".dots i");
+    car.addEventListener("scroll",()=>{const idx=Math.round(car.scrollLeft/car.clientWidth);
+      dots.forEach((d,k)=>d.classList.toggle("on",k===idx));},{passive:true});}
+  return el;
+}
+function updateCounts(){
+  let ok=0,mod=0,wait=0;
+  Object.values(state).forEach(s=>{s.stato==="approvato"?ok++:s.stato==="modifica"?mod++:wait++;});
+  document.getElementById("c-ok").textContent=ok;
+  document.getElementById("c-mod").textContent=mod;
+  document.getElementById("c-wait").textContent=wait;
+}
+function riepilogo(){
+  const L=[`PIANO EDITORIALE — ${PIANO.cliente} — ${PIANO.mese}`,""];
+  PIANO.posts.forEach((p,i)=>{
+    const s=state[i];
+    const tag=s.stato==="approvato"?"✅ APPROVATO":s.stato==="modifica"?"✏️ DA MODIFICARE":"⏳ IN ATTESA";
+    L.push(`${i+1}. ${dataEstesa(p.data)} · ${p.formato} (${p.canale}) — ${tag}`);
+    if(s.stato==="modifica"&&s.nota.trim()) L.push(`   → ${s.nota.trim()}`);
+  });
+  const ok=Object.values(state).filter(s=>s.stato==="approvato").length;
+  const mod=Object.values(state).filter(s=>s.stato==="modifica").length;
+  const wait=Object.values(state).filter(s=>s.stato==="attesa").length;
+  L.push("",`Riepilogo: ${ok} approvati · ${mod} da modificare · ${wait} in attesa.`);
+  return L.join("\n");
+}
+function toast(msg){const t=document.getElementById("toast");
+  document.getElementById("toast-msg").textContent=msg; t.classList.add("show");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2800);}
+
+async function copia(){
+  const txt=riepilogo();
+  try{await navigator.clipboard.writeText(txt);}
+  catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
+  toast("Riepilogo copiato — incollalo a Francesca");
+}
+
+async function invia(){
+  const ref=document.getElementById("ref").value.trim();
+  if(!ref){document.getElementById("ref").focus(); toast("Scrivi il tuo nome prima di inviare"); return;}
+  const vals=Object.values(state);
+  const approvati=vals.filter(s=>s.stato==="approvato").length;
+  const daMod=vals.filter(s=>s.stato==="modifica").length;
+  const inAttesa=vals.filter(s=>s.stato==="attesa").length;
+  if(inAttesa>0 && !confirm(`Ci sono ${inAttesa} contenuti ancora in attesa. Vuoi inviare comunque?`)) return;
+
+  const btn=document.getElementById("sendBtn"); btn.disabled=true; btn.textContent="Invio in corso…";
+  const payload={
+    cliente:PIANO.cliente, mese:PIANO.mese, referente:ref,
+    approvati, daModificare:daMod, inAttesa, decisioni:riepilogo()
+  };
+  try{
+    // text/plain + no-cors: evita il blocco CORS verso Google.
+    // La risposta non è leggibile (è normale): se la fetch va a buon fine, è inviato.
+    await fetch(GOOGLE_URL,{
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload)
+    });
+    document.getElementById("sendForm").style.display="none";
+    document.getElementById("sentOk").style.display="block";
+    document.getElementById("sentOk").scrollIntoView({behavior:"smooth",block:"center"});
+  }catch(err){
+    btn.disabled=false; btn.textContent="Invia le approvazioni";
+    await copia();
+    toast("Invio non riuscito — riepilogo copiato, mandalo a mano");
+  }
+}
+
+/* ===== avvio ===== */
+if(!PIANO || !PIANO.posts || !PIANO.posts.length){
+  document.body.innerHTML='<div class="empty"><h2>Piano vuoto</h2><p>Apri il file <code>dati.js</code> e aggiungi i contenuti del mese. Compariranno qui.</p></div>';
+}else{
+  document.getElementById("cliente").textContent=PIANO.cliente;
+  document.getElementById("mese").textContent=PIANO.mese;
+  document.title=`${PIANO.cliente} · Piano editoriale ${PIANO.mese}`;
+  const feed=document.getElementById("feed");
+  PIANO.posts.forEach((p,i)=>feed.appendChild(buildCard(p,i)));
+  updateCounts();
+  document.getElementById("jumpBtn").onclick=()=>document.getElementById("sendBox").scrollIntoView({behavior:"smooth"});
+  document.getElementById("sendBtn").onclick=invia;
+  document.getElementById("copyFallback").onclick=copia;
+}
+</script>
+</body>
+</html>
